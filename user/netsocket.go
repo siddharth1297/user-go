@@ -23,10 +23,12 @@ type Connection struct {
 
 // Reads from socket.
 func (conn *Connection) Read(buf []byte, offset uint64) (int, error) {
-	n, err := unix.Read(conn.Sock, buf[offset:])
+	log.Printf("Waiting for read on sock %d %v\n", conn.Sock, offset)
+	n, err := unix.Read(conn.Sock, buf)
 	if err != nil {
 		log.Printf("Read error. %v", err)
 	}
+	log.Printf("Read %v %v\n", n, conn.Sock)
 	return n, err
 }
 
