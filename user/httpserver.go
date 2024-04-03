@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
+	"path"
 )
 
 const (
@@ -12,7 +14,12 @@ const (
 	DEFAULT_HTTP_REQ_BODY_SIZE   = (1 << 20) // (1MB)
 )
 
-type callbackfunc_t func(*HttpHeader, *HttpResponseWriter)
+var (
+	CRLF     = []byte("\r\n")
+	CRLFCRLF = []byte("\r\n\r\n")
+)
+
+type callbackfunc_t func(*HttpRequest, *HttpResponseWriter)
 
 type HttpServer struct {
 	tcpServer           *TCPServer
@@ -25,17 +32,30 @@ type HttpConfig struct {
 	TcpConfig *TCPServerConfig
 }
 
-type HttpHeader struct {
-	Headers map[string]string
-	Body    []byte
+type HttpRequest struct {
+	Headers      map[string]string
+	Body         []byte
+	Method       string
+	AbsolutePath string
+	Queries      url.Values
+	File         string
+	Version      string
+	Payload      []byte
+	PayloadStart int
+
+	Path string
 }
 
 type HttpResponseWriter struct {
-	conn *TCPConnection
+	conn   *TCPConnection
+	server *HttpServer
 }
 
 func (resp *HttpResponseWriter) Write(msg *string) {
 	resp.conn.Write([]byte(*msg), uint64(len(*msg)))
+	resp.server.ep_instance.RemoveConnection(resp.conn.Conn.Sock)
+	delete(resp.server.activeConnectionMap, resp.conn.Conn.Sock)
+	resp.conn.Close()
 }
 
 // Similar to NewServeMux
@@ -109,14 +129,23 @@ func (server *HttpServer) onEpollReadEvent(sock int) {
 		buf[i] = 'c'
 	}*/
 	//fmt.Println(string(buf))
-	size, err := conn.Read(buf, uint64(data_len))
+	size, _ := conn.Read(buf, uint64(data_len))
 
 	/*
 		fmt.Printf("Conn: %v\n", conn.Conn)
 		size, err := unix.Read(conn.Conn.Sock, buf)
 	*/
-	fmt.Printf("Read: %v %s %v %v", size, string(buf[:size]), err, len(buf))
-	server.parseHeader(buf, size)
+	//fmt.Printf("Read: %v %s %v %v\n", size, string(buf[:size]), err, len(buf))
+	//fmt.Printf("%v\n", string(buf[:size]))
+	req := server.parseHeader(buf, size)
+	respWriter := &HttpResponseWriter{conn: conn, server: server}
+	fmt.Printf("%v Body: \"%v\"\n", size, string(buf[:size]))
+	fmt.Printf("%v\n", req)
+	server.handles[req.AbsolutePath](req, respWriter)
+	log.Printf("----CallbackDone---\n")
+	// TODO: Shrink buf
+	// Start from small size then grow.
+	// If default size is biggrt, then also shrink it
 }
 
 func (server *HttpServer) onEpollWriteEvent(sock int) {
@@ -127,13 +156,39 @@ func (server *HttpServer) onEpollCloseEvent(sock int) {
 
 }
 
-func (server *HttpServer) parseHeader(buf []byte, buf_len int) {
-	break_line := []byte("\r\n")
-	header_end_index := bytes.Index(buf, break_line)
-	if header_end_index != -1 {
-		log.Fatalf("Header end not found. Len: %v buf %v", buf_len, string(buf))
+func (server *HttpServer) parseHeader(buf []byte, buf_len int) *HttpRequest {
+	req := &HttpRequest{}
+
+	header_end_index := bytes.Index(buf[:buf_len], CRLFCRLF)
+	if header_end_index == -1 {
+		log.Fatalf("Header end not found. Len: %v buf \n\"%v\"", buf_len, (buf[:buf_len]))
 	}
 	startindex := 0
-	index := bytes.Index(buf[startindex:], break_line)
-	log.Println("RequestLine: ", string(buf[startindex:index]))
+	index := bytes.Index(buf[startindex:], CRLF)
+	req.Method, req.Path, req.Version = parseRequestLine(buf, startindex, index)
+	path_parser, err := url.Parse(req.Path)
+	if err != nil {
+		panic(err)
+	}
+	req.AbsolutePath = path_parser.Path
+	req.AbsolutePath, req.File = path.Split(req.AbsolutePath)
+	req.Queries, err = url.ParseQuery(path_parser.RawQuery)
+	if err != nil {
+		log.Fatalf("Error in query string. path: \"%v\" err: %v", req.Path, err.Error())
+	}
+	// TODO: Parse headers
+	if req.Method == "POST" {
+		req.Payload = buf[header_end_index+4 : buf_len]
+		req.PayloadStart = header_end_index + 4
+	}
+	return req
+}
+
+func parseRequestLine(buf []byte, start int, end int) (string, string, string) {
+	fs := bytes.Index(buf[start:], []byte(" "))
+	method := string(buf[start:fs])
+	ss := bytes.Index(buf[fs+1:], []byte(" "))
+	path := string(buf[fs+1 : fs+1+ss])
+	version := "HTTP/1.1"
+	return method, path, version
 }

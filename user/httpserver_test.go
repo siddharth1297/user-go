@@ -1,7 +1,6 @@
 package user
 
 import (
-	"bytes"
 	"context"
 	"log"
 	"net"
@@ -15,7 +14,7 @@ func TestHTTPServer1(t *testing.T) {
 	tcpConfig := TCPServerConfig{Port: port, Backlog: 5, reuseAddr: true, reusePort: false, NonBlock: true}
 	server := NewHttpServer(&HttpConfig{TcpConfig: &tcpConfig})
 	msg_send := "Hello"
-	server.HandleFunc("/", func(header *HttpHeader, response *HttpResponseWriter) {
+	server.HandleFunc("/", func(header *HttpRequest, response *HttpResponseWriter) {
 		data := msg_send
 		response.Write(&data)
 	})
@@ -46,7 +45,7 @@ func TestHTTPServer2(t *testing.T) {
 	tcpConfig := TCPServerConfig{Port: port, Backlog: 5, reuseAddr: true, reusePort: false, NonBlock: true}
 	server := NewHttpServer(&HttpConfig{TcpConfig: &tcpConfig})
 	msg_send := "Hello"
-	server.HandleFunc("/", func(header *HttpHeader, response *HttpResponseWriter) {
+	server.HandleFunc("/", func(header *HttpRequest, response *HttpResponseWriter) {
 		data := msg_send
 		response.Write(&data)
 	})
@@ -87,10 +86,19 @@ func TestHTTPServer3(t *testing.T) {
 	port := 8080
 	tcpConfig := TCPServerConfig{Port: port, Backlog: 5, reuseAddr: true, reusePort: false, NonBlock: true}
 	server := NewHttpServer(&HttpConfig{TcpConfig: &tcpConfig})
-	msg_send := "Hello"
-	server.HandleFunc("/", func(header *HttpHeader, response *HttpResponseWriter) {
-		data := msg_send
-		response.Write(&data)
+	//msg_send := "Hello"
+	server.HandleFunc("/", func(request *HttpRequest, response *HttpResponseWriter) {
+		//data := msg_send
+		//response.Write(&data)
+		log.Println(request)
+		log.Printf("%v \n", response)
+		payload := "Working"
+		resp := "HTTP/1.1 200 OK" + string(CRLF) +
+			"Content-Length: " + strconv.Itoa(len(payload)) + string(CRLF) +
+			"Connection: Closed" + string(CRLF) + string(CRLF) +
+			payload
+		response.Write(&resp)
+		//response.conn.Conn.Write([]byte(resp), uint64(len(resp)))
 	})
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
@@ -124,12 +132,4 @@ func TestHTTPServer3(t *testing.T) {
 	*/
 
 	time.Sleep(time.Second * 50)
-}
-
-func parseHeader(buf []byte, buf_len int) {
-	header_end_index := bytes.Index(buf, []byte("\r\n"))
-	if header_end_index != -1 {
-		log.Fatalf("Header end not found. Len: %v buf %v", buf_len, string(buf))
-	}
-
 }
