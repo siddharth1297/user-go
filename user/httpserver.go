@@ -1,9 +1,15 @@
 package user
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
+)
+
+const (
+	DEFAULT_HTTP_REQ_HEADER_SIZE = (1 << 10) // (1KB)
+	DEFAULT_HTTP_REQ_BODY_SIZE   = (1 << 20) // (1MB)
 )
 
 type callbackfunc_t func(*HttpHeader, *HttpResponseWriter)
@@ -20,6 +26,8 @@ type HttpConfig struct {
 }
 
 type HttpHeader struct {
+	Headers map[string]string
+	Body    []byte
 }
 
 type HttpResponseWriter struct {
@@ -92,7 +100,8 @@ func (server *HttpServer) onEpollReadEvent(sock int) {
 		return
 	}
 	conn := server.activeConnectionMap[sock]
-	data_len := int(1e9) //2048
+	//data_len := int(1e9) //2048
+	data_len := DEFAULT_HTTP_REQ_BODY_SIZE
 	buf := make([]byte, data_len)
 
 	log.Printf("Waiting for read. bufLen: %v\n", data_len)
@@ -101,11 +110,13 @@ func (server *HttpServer) onEpollReadEvent(sock int) {
 	}*/
 	//fmt.Println(string(buf))
 	size, err := conn.Read(buf, uint64(data_len))
+
 	/*
 		fmt.Printf("Conn: %v\n", conn.Conn)
 		size, err := unix.Read(conn.Conn.Sock, buf)
 	*/
 	fmt.Printf("Read: %v %s %v %v", size, string(buf[:size]), err, len(buf))
+	server.parseHeader(buf, size)
 }
 
 func (server *HttpServer) onEpollWriteEvent(sock int) {
@@ -114,4 +125,15 @@ func (server *HttpServer) onEpollWriteEvent(sock int) {
 
 func (server *HttpServer) onEpollCloseEvent(sock int) {
 
+}
+
+func (server *HttpServer) parseHeader(buf []byte, buf_len int) {
+	break_line := []byte("\r\n")
+	header_end_index := bytes.Index(buf, break_line)
+	if header_end_index != -1 {
+		log.Fatalf("Header end not found. Len: %v buf %v", buf_len, string(buf))
+	}
+	startindex := 0
+	index := bytes.Index(buf[startindex:], break_line)
+	log.Println("RequestLine: ", string(buf[startindex:index]))
 }
