@@ -15,8 +15,8 @@ type TCPServerConfig struct {
 	Port       int    // Server port
 	Device     string
 	Backlog    int // == -1, 0. default value will be set
-	reuseAddr  bool
-	reusePort  bool
+	ReuseAddr  bool
+	ReusePort  bool
 	NonBlock   bool // For Epoll
 }
 
