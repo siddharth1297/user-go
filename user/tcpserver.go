@@ -45,10 +45,10 @@ func CreateServerTCP(config *TCPServerConfig) *TCPServer {
 		log.Fatalf("Unable to create socket. error: %v", err.Error())
 	}
 	reuse := 0
-	if config.reuseAddr {
+	if config.ReuseAddr {
 		reuse |= unix.SO_REUSEADDR
 	}
-	if config.reusePort {
+	if config.ReusePort {
 		reuse |= unix.SO_REUSEPORT
 	}
 	if reuse != 0 {

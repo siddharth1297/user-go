@@ -8,7 +8,7 @@ import (
 
 func TestTCPServer1(t *testing.T) {
 	port := 8080
-	config := TCPServerConfig{Port: port, Backlog: 5, reuseAddr: true, reusePort: true}
+	config := TCPServerConfig{Port: port, Backlog: 5, ReuseAddr: true, ReusePort: true}
 	server := CreateServerTCP(&config)
 	server.StartListen()
 
@@ -54,7 +54,7 @@ func TestTCPServer1(t *testing.T) {
 
 func TestTCPServer2(t *testing.T) {
 	port := 8080
-	config := TCPServerConfig{Port: port, Backlog: 5, reuseAddr: true, reusePort: true}
+	config := TCPServerConfig{Port: port, Backlog: 5, ReuseAddr: true, ReusePort: true}
 	server := CreateServerTCP(&config)
 	server.StartListen()
 

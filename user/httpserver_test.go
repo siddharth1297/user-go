@@ -11,7 +11,7 @@ import (
 
 func TestHTTPServer1(t *testing.T) {
 	port := 8080
-	tcpConfig := TCPServerConfig{Port: port, Backlog: 5, reuseAddr: true, reusePort: false, NonBlock: true}
+	tcpConfig := TCPServerConfig{Port: port, Backlog: 5, ReuseAddr: true, ReusePort: false, NonBlock: true}
 	server := NewHttpServer(&HttpConfig{TcpConfig: &tcpConfig})
 	msg_send := "Hello"
 	server.HandleFunc("/", func(header *HttpRequest, response *HttpResponseWriter) {
@@ -42,7 +42,7 @@ func TestHTTPServer1(t *testing.T) {
 
 func TestHTTPServer2(t *testing.T) {
 	port := 8080
-	tcpConfig := TCPServerConfig{Port: port, Backlog: 5, reuseAddr: true, reusePort: false, NonBlock: true}
+	tcpConfig := TCPServerConfig{Port: port, Backlog: 5, ReuseAddr: true, ReusePort: false, NonBlock: true}
 	server := NewHttpServer(&HttpConfig{TcpConfig: &tcpConfig})
 	msg_send := "Hello"
 	server.HandleFunc("/", func(header *HttpRequest, response *HttpResponseWriter) {
@@ -84,7 +84,7 @@ func TestHTTPServer2(t *testing.T) {
 
 func TestHTTPServer3(t *testing.T) {
 	port := 8080
-	tcpConfig := TCPServerConfig{Port: port, Backlog: 5, reuseAddr: true, reusePort: false, NonBlock: true}
+	tcpConfig := TCPServerConfig{Port: port, Backlog: 5, ReuseAddr: true, ReusePort: false, NonBlock: true}
 	server := NewHttpServer(&HttpConfig{TcpConfig: &tcpConfig})
 	//msg_send := "Hello"
 	server.HandleFunc("/", func(request *HttpRequest, response *HttpResponseWriter) {
