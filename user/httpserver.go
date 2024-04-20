@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/url"
-	// "path"
 )
 
 const (
