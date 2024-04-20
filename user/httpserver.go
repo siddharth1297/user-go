@@ -23,7 +23,7 @@ type callbackfunc_t func(*HttpRequest, *HttpResponseWriter)
 
 type HttpServer struct {
 	tcpServer           *TCPServer
-	handles             map[string]callbackfunc_t
+	Handles             map[string]callbackfunc_t
 	ep_instance         *EpollInstance
 	activeConnectionMap map[int]*TCPConnection
 }
@@ -60,14 +60,14 @@ func (resp *HttpResponseWriter) Write(msg *string) {
 
 // Similar to NewServeMux
 func NewHttpServer(httpConfig *HttpConfig) *HttpServer {
-	server := &HttpServer{handles: make(map[string]callbackfunc_t), activeConnectionMap: make(map[int]*TCPConnection)}
+	server := &HttpServer{Handles: make(map[string]callbackfunc_t), activeConnectionMap: make(map[int]*TCPConnection)}
 	server.ep_instance = NewEpollInstance(DEFAULT_TIMEOUT, DEFAULT_MAX_EVENTS, server.onEpollReadEvent, server.onEpollWriteEvent)
 	server.tcpServer = CreateServerTCP(httpConfig.TcpConfig)
 	return server
 }
 
 func (server *HttpServer) HandleFunc(path string, callbackFunc callbackfunc_t) {
-	server.handles[path] = callbackFunc
+	server.Handles[path] = callbackFunc
 }
 
 /*
@@ -83,7 +83,7 @@ func (server *HttpServer) ListenAndServe(ctx context.Context) {
 			path := "/"
 			respWriter := &HttpResponseWriter{conn: conn}
 			reqHeader := &HttpHeader{}
-			server.handles[path](reqHeader, respWriter)
+			server.Handles[path](reqHeader, respWriter)
 		}
 	}
 	// Close all the active requests
@@ -141,7 +141,7 @@ func (server *HttpServer) onEpollReadEvent(sock int) {
 	respWriter := &HttpResponseWriter{conn: conn, server: server}
 	fmt.Printf("%v Body: \"%v\"\n", size, string(buf[:size]))
 	fmt.Printf("%v\n", req)
-	server.handles[req.AbsolutePath](req, respWriter)
+	server.Handles[req.AbsolutePath](req, respWriter)
 	log.Printf("----CallbackDone---\n")
 	// TODO: Shrink buf
 	// Start from small size then grow.
