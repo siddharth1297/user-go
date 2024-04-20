@@ -171,7 +171,7 @@ func (server *HttpServer) parseHeader(buf []byte, buf_len int) *HttpRequest {
 		panic(err)
 	}
 	req.AbsolutePath = path_parser.Path
-	req.AbsolutePath, req.File = path.Split(req.AbsolutePath)
+	// req.AbsolutePath, req.File = path.Split(req.AbsolutePath)
 	req.Queries, err = url.ParseQuery(path_parser.RawQuery)
 	if err != nil {
 		log.Fatalf("Error in query string. path: \"%v\" err: %v", req.Path, err.Error())
