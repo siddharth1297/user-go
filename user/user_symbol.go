@@ -6,23 +6,24 @@ import (
 )
 
 const (
-	DEFAULT_ID = 0
+	DEFAULT_ID = uint32(0)
 )
 
-var declared_message_id = 0
+var declared_message_id = uint32(0)
 
 type Symbol struct {
-	IsDeclaration bool            // Message declaration
-	Id            uint            // Id of the symbol
-	Name          string          // Name of the symbol
-	Repeated      bool            // Is it repeated
-	Required      bool            // Is it required
-	ParentSymbol  *Symbol         // Pointer to parent symbol. Parent symbol IsMessage must be true
-	SymbolType    UserType        // Type of the symbol
-	NestedType    *Symbol         // If it is a nested type, points to the Symbol
-	Members       []*Symbol       // Members of the message. Non-nil in case of declration(IsMessage=1)
-	MemberToIdMap map[string]uint // Map contains member name to id of the member
-	MaxId         uint            // Maximum id present in this Message
+	IsDeclaration    bool              // Message declaration
+	Id               uint32            // Id of the symbol
+	Name             string            // Name of the symbol
+	Repeated         bool              // Is it repeated
+	Required         bool              // Is it required
+	ParentSymbol     *Symbol           // Pointer to parent symbol. Parent symbol IsMessage must be true
+	SymbolType       UserType          // Type of the symbol
+	NestedType       *Symbol           // If it is a nested type, points to the Symbol
+	Members          []*Symbol         // Members of the message. Non-nil in case of declration(IsMessage=1)
+	MemberToIdMap    map[string]uint32 // Map contains member name to id of the member
+	MemberIdToIdxMap map[uint32]uint32 // Map contains member id to index in the Members array
+	MaxId            uint32            // Maximum id present in this Message
 }
 
 func (symbol Symbol) String() string {
@@ -35,7 +36,7 @@ func (symbol Symbol) String() string {
 		if symbol.Required {
 			required = "required "
 		}
-		symbol_type_str := typeToStr(symbol.SymbolType)
+		symbol_type_str := symbol.SymbolType.TypeToStr()
 		if symbol.SymbolType == UserType(TYPE_NESTED_MESSAGE) {
 			symbol_type_str = symbol.NestedType.Name
 		}
@@ -67,18 +68,18 @@ func (sym *Symbol) ValidateSymbol() {
 	}
 }
 
-// Use it for creating a symbol for declation of a message
+// Use it for creating a symbol for declaration of a message
 func NewDeclarationSymbol(name string) *Symbol {
 	declared_message_id++
-	symbol := &Symbol{IsDeclaration: true, Id: uint(declared_message_id), Name: name, Repeated: false, Required: false, ParentSymbol: nil, SymbolType: TYPE_MESSAGE_DECL, NestedType: nil,
-		Members: make([]*Symbol, 0), MemberToIdMap: make(map[string]uint), MaxId: DEFAULT_ID}
+	symbol := &Symbol{IsDeclaration: true, Id: declared_message_id, Name: name, Repeated: false, Required: false, ParentSymbol: nil, SymbolType: TYPE_MESSAGE_DECL, NestedType: nil,
+		Members: make([]*Symbol, 0), MemberToIdMap: make(map[string]uint32), MemberIdToIdxMap: make(map[uint32]uint32), MaxId: DEFAULT_ID}
 	return symbol
 }
 
 // use it for creating a symbol which is a member of a declared message
-func NewMemberSymbol(id uint, name string, symboltype UserType, parent *Symbol, nestedtype *Symbol, repeated bool, required bool) *Symbol {
+func NewMemberSymbol(id uint32, name string, symboltype UserType, parent *Symbol, nestedtype *Symbol, repeated bool, required bool) *Symbol {
 	symbol := &Symbol{IsDeclaration: false, Id: id, Name: name, Repeated: repeated, Required: required, ParentSymbol: parent, SymbolType: symboltype,
-		NestedType: nestedtype, Members: nil, MemberToIdMap: nil, MaxId: DEFAULT_ID}
+		NestedType: nestedtype, Members: nil, MemberToIdMap: nil, MemberIdToIdxMap: nil, MaxId: DEFAULT_ID}
 	parent.ValidateSymbol()
 	return symbol
 }
@@ -108,4 +109,19 @@ func (sym *Symbol) addMember(member *Symbol) {
 	}
 	sym.Members = append(sym.Members, member)
 	sym.MemberToIdMap[member.Name] = member.Id
+	sym.MemberIdToIdxMap[member.Id] = uint32(len(sym.Members)) - 1
+}
+
+func (sym *Symbol) getMemberIdAndIdx(member_name string) (uint32, uint32) {
+	id := sym.MemberToIdMap[member_name]
+	return id, sym.MemberIdToIdxMap[id]
+}
+
+func (sym *Symbol) getMemberSymbolAndIdx(member_name string) (*Symbol, uint32) {
+	idx := sym.MemberIdToIdxMap[sym.MemberToIdMap[member_name]]
+	return sym.Members[idx], idx
+}
+
+func (parent *Symbol) getSymbolFromId(id uint32) *Symbol {
+	return parent.Members[parent.MemberIdToIdxMap[id]]
 }

@@ -4,6 +4,7 @@ package user
 import (
 	"log"
 	"syscall"
+	"unsafe"
 
 	"golang.org/x/sys/unix"
 )
@@ -52,6 +53,15 @@ func (conn *Connection) Writev(bufs [][]byte) (int, error) {
 	return n, err
 }
 
+// Writes to socket. Raw syscall
+func (conn *Connection) WritevRaw(iovs []syscall.Iovec) (int, error) {
+	n, _, err := syscall.Syscall(syscall.SYS_WRITEV, uintptr(conn.Sock), uintptr(unsafe.Pointer(&iovs[0])), uintptr(len(iovs)))
+	if err != 0 {
+		return -1, err
+	}
+	return int(n), nil
+}
+
 // Close the connection
 func (conn *Connection) Close() {
 	if conn.Closed {
@@ -88,6 +98,14 @@ func (tcpConn *TCPConnection) Write(buf []byte, size uint64) (int, error) {
 
 func (tcpConn *TCPConnection) Writev(bufs [][]byte) (int, error) {
 	n, err := tcpConn.Conn.Writev(bufs)
+	if err != nil {
+		tcpConn.Server.Stats.TotalBytesWritten += uint64(n)
+	}
+	return n, err
+}
+
+func (tcpConn *TCPConnection) WritevRaw(iovs []syscall.Iovec) (int, error) {
+	n, err := tcpConn.Conn.WritevRaw(iovs)
 	if err != nil {
 		tcpConn.Server.Stats.TotalBytesWritten += uint64(n)
 	}

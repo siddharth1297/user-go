@@ -45,9 +45,9 @@ func (sym_tab *SymbolTable) addMessageDecl(symbol *Symbol) bool {
 		log.Fatalf("Symbol is already present in the map. PresentSym: %v, sym: %v", sym, symbol)
 	}
 
-	sym_tab.msg_to_id_map[symbol.Name] = uint32(symbol.Id)
-	sym_tab.id_to_msg[uint32(symbol.Id)] = symbol.Name
-	sym_tab.id_to_symbol[uint32(symbol.Id)] = symbol
+	sym_tab.msg_to_id_map[symbol.Name] = symbol.Id
+	sym_tab.id_to_msg[symbol.Id] = symbol.Name
+	sym_tab.id_to_symbol[symbol.Id] = symbol
 
 	return true
 }
