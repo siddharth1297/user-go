@@ -2,7 +2,6 @@ package user
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"os"
 
@@ -54,25 +53,24 @@ func ParseProtoFile(fileName string) ([]*Symbol, error) {
 	scanner := bufio.NewScanner(file)
 
 	var currMsg *Symbol = nil
+	inMsg := false
 
 	for scanner.Scan() {
 		wordsList := []string{}
 		line := scanner.Text()
+		line = strings.TrimSpace(line)
 		words := strings.Split(line, " ")
 		wordsList = append(wordsList, words...)
-		inMsg := false
 
 		if wordsList[0] == "message" {
 			currMsg = NewDeclarationSymbol(wordsList[1])
 			inMsg = true
-			fmt.Printf("Entering the message: %s\n", wordsList[1])
 		} else if wordsList[0] == "}" {
 			allMsgs = append(allMsgs, currMsg)
 			MsgsMap[currMsg.Name] = currMsg
 			inMsg = false
 			currMsg = nil
 		} else if inMsg && len(wordsList) > 0{
-			print(line)
 			if wordsList[0] == "//" || wordsList[0] == "/*" {
 				continue
 			}	
@@ -102,11 +100,12 @@ func ParseProtoFile(fileName string) ([]*Symbol, error) {
 			}
 			id = uint32(idInt)
 			
+			if symboltype == TYPE_NESTED_MESSAGE {
+				nestedtype = MsgsMap[typeName]
+			}
 			field := NewMemberSymbol(id, name, symboltype, currMsg, nestedtype, isRepeated, required)
 			currMsg.addMember(field)
 		}
-
-		fmt.Printf("LINE: %s\n", line)
 	}
 
 	if err := scanner.Err(); err != nil {
