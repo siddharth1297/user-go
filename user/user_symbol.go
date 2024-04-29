@@ -113,12 +113,18 @@ func (sym *Symbol) addMember(member *Symbol) {
 }
 
 func (sym *Symbol) getMemberIdAndIdx(member_name string) (uint32, uint32) {
-	id := sym.MemberToIdMap[member_name]
+	id, exists := sym.MemberToIdMap[member_name]
+	if !exists {
+		log.Fatalf("symbol \"%v\" not a member of %v\n", member_name, sym.Name)
+	}
 	return id, sym.MemberIdToIdxMap[id]
 }
 
 func (sym *Symbol) getMemberSymbolAndIdx(member_name string) (*Symbol, uint32) {
-	idx := sym.MemberIdToIdxMap[sym.MemberToIdMap[member_name]]
+	idx, exists := sym.MemberIdToIdxMap[sym.MemberToIdMap[member_name]]
+	if !exists {
+		log.Fatalf("symbol \"%v\" not a member of %v\n", member_name, sym.Name)
+	}
 	return sym.Members[idx], idx
 }
 
