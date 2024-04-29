@@ -15,15 +15,15 @@ const (
 	TYPE_UINT32
 	TYPE_INT64
 	TYPE_UINT64
-	TYPE_FLOAT32
-	TYPE_FLOAT64
+	TYPE_FLOAT
+	TYPE_DOUBLE
 	TYPE_STRING
 	TYPE_BYTE
 	TYPE_MESSAGE_DECL // Declaration
 	TYPE_NESTED_MESSAGE
 )
 
-var USERTYPE_TO_STR = [12]string{"unknown", "bool", "int32", "uint32", "int64", "uint64", "float32", "float64", "string", "byte", "message-decl", "message-nested"}
+var USERTYPE_TO_STR = [12]string{"unknown", "bool", "int32", "uint32", "int64", "uint64", "float", "double", "string", "byte", "message-decl", "message-nested"}
 
 type byte_t struct {
 	Buf_   []*byte
@@ -43,9 +43,9 @@ func (usertype UserType) TypeToSize() uint64 {
 	switch usertype {
 	case TYPE_BOOL, TYPE_BYTE:
 		return 1
-	case TYPE_INT32, TYPE_UINT32, TYPE_FLOAT32:
+	case TYPE_INT32, TYPE_UINT32, TYPE_FLOAT:
 		return 4
-	case TYPE_INT64, TYPE_UINT64, TYPE_FLOAT64:
+	case TYPE_INT64, TYPE_UINT64, TYPE_DOUBLE:
 		return 8
 	}
 	log.Fatalf("Error invalid typeToSize. type: %s", usertype.TypeToStr())
@@ -99,7 +99,7 @@ func (usertype UserType) IsCompatibleType(value interface{}, bytes *[]byte) bool
 			}
 		}
 
-	case TYPE_FLOAT32:
+	case TYPE_FLOAT:
 		{
 			switch value.(type) {
 			case float32:
@@ -107,7 +107,7 @@ func (usertype UserType) IsCompatibleType(value interface{}, bytes *[]byte) bool
 				return true
 			}
 		}
-	case TYPE_FLOAT64:
+	case TYPE_DOUBLE:
 		{
 			switch value.(type) {
 			case float64:
@@ -137,6 +137,35 @@ func float64ToBytes(float float64, bytes *[]byte) {
 	// https://stackoverflow.com/questions/22491876/convert-byte-slice-uint8-to-float64-in-golang
 	bits := math.Float64bits(float)
 	binary.LittleEndian.PutUint64(*bytes, bits)
+}
+
+func StrToType(typeName string) (UserType) {
+	switch typeName {
+	case "bool":
+		return TYPE_BOOL
+	case "int32":
+		return TYPE_INT32
+	case "uint32":
+		return TYPE_UINT32
+	case "int64":
+		return TYPE_INT64
+	case "uint64":
+		return TYPE_UINT64
+	case "float":
+		return TYPE_FLOAT
+	case "double":
+		return TYPE_DOUBLE
+	case "string":
+		return TYPE_STRING
+	case "byte":
+		return TYPE_BYTE
+	default:
+		_, ok := MsgsMap[typeName]; if ok {
+			return TYPE_NESTED_MESSAGE
+		} else {
+			return TYPE_UNKNOWN
+		}
+	}
 }
 
 /*
@@ -178,14 +207,14 @@ func (usertype UserType) IsCompatibleType(value interface{}) bool {
 			}
 		}
 
-	case TYPE_FLOAT32:
+	case TYPE_FLOAT:
 		{
 			switch value.(type) {
 			case float32:
 				return true
 			}
 		}
-	case TYPE_FLOAT64:
+	case TYPE_DOUBLE:
 		{
 			switch value.(type) {
 			case float32, float64:

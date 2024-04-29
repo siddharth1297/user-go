@@ -177,10 +177,10 @@ func getPrimitiveValFromByteBuffer(bytes *[]byte, offset, size uint64, usertype 
 	case TYPE_UINT64:
 		log.Println("[[[[[[[[[[[[[[[[UINT64]]]]]]]]]]]]]]]] ", offset, " ", size)
 		return binary.LittleEndian.Uint64((*bytes)[offset : offset+size])
-	case TYPE_FLOAT32:
+	case TYPE_FLOAT:
 		bits := binary.LittleEndian.Uint32((*bytes)[offset : offset+size])
 		return math.Float32frombits(bits)
-	case TYPE_FLOAT64:
+	case TYPE_DOUBLE:
 		bits := binary.LittleEndian.Uint64((*bytes)[offset : offset+size])
 		return math.Float64frombits(bits)
 	}

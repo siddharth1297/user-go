@@ -11,35 +11,6 @@ import (
 
 var MsgsMap = make(map[string]*Symbol)
 
-func StrToType(typeName string) (UserType) {
-	switch typeName {
-	case "bool":
-		return TYPE_BOOL
-	case "int32":
-		return TYPE_INT32
-	case "uint32":
-		return TYPE_UINT32
-	case "int64":
-		return TYPE_INT64
-	case "uint64":
-		return TYPE_UINT64
-	case "float32":
-		return TYPE_FLOAT32
-	case "float64":
-		return TYPE_FLOAT64
-	case "string":
-		return TYPE_STRING
-	case "byte":
-		return TYPE_BYTE
-	default:
-		_, ok := MsgsMap[typeName]; if ok {
-			return TYPE_NESTED_MESSAGE
-		} else {
-			return TYPE_UNKNOWN
-		}
-	}
-}
-
 func ParseProtoFile(fileName string) ([]*Symbol, error) {
 	var allMsgs []*Symbol
 
@@ -115,5 +86,3 @@ func ParseProtoFile(fileName string) ([]*Symbol, error) {
 
 	return allMsgs, nil
 }
-
-// func PrintProtoMsg

@@ -15,13 +15,13 @@ func TestSL0(t *testing.T) {
 	/*
 	   message M1 {
 	       int32 a = 1;
-	       float32 b = 2;
+	       float b = 2;
 	   }
 	*/
 	m1 := NewDeclarationSymbol("M1")
 	sym_tab.addMessageDecl(m1)
 	m1.addMember(NewMemberSymbol(1, "a", UserType(TYPE_INT32), m1, nil, false, false))
-	m1.addMember(NewMemberSymbol(2, "b", UserType(TYPE_FLOAT32), m1, nil, false, false))
+	m1.addMember(NewMemberSymbol(2, "b", UserType(TYPE_FLOAT), m1, nil, false, false))
 	fmt.Println(m1)
 
 	port := 8087
@@ -67,14 +67,14 @@ func TestSL1(t *testing.T) {
 	/*
 		   message M1 {
 		       uint32 a = 1;
-		       repeated float32 b = 2;
+		       repeated float b = 2;
 			   M1 c = 3;
 		   }
 	*/
 	m1 := NewDeclarationSymbol("M1")
 	sym_tab.addMessageDecl(m1)
 	m1.addMember(NewMemberSymbol(1, "a", UserType(TYPE_INT32), m1, nil, false, false))
-	m1.addMember(NewMemberSymbol(2, "b", UserType(TYPE_FLOAT32), m1, nil, true, false))
+	m1.addMember(NewMemberSymbol(2, "b", UserType(TYPE_FLOAT), m1, nil, true, false))
 	m1.addMember(NewMemberSymbol(3, "c", UserType(TYPE_NESTED_MESSAGE), m1, m1, false, false))
 	fmt.Println(m1)
 
@@ -198,13 +198,13 @@ func TestSL3(t *testing.T) {
 	/*
 		   message M1 {
 		       repeated int32 a = 1;
-			   repeated float64 b = 2;
+			   repeated double b = 2;
 		   }
 	*/
 	m1 := NewDeclarationSymbol("M1")
 	sym_tab.addMessageDecl(m1)
 	m1.addMember(NewMemberSymbol(1, "a", UserType(TYPE_INT32), m1, nil, true, false))
-	m1.addMember(NewMemberSymbol(2, "b", UserType(TYPE_FLOAT64), m1, nil, true, false))
+	m1.addMember(NewMemberSymbol(2, "b", UserType(TYPE_DOUBLE), m1, nil, true, false))
 	fmt.Println(m1)
 
 	port := 8087
