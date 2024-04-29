@@ -51,3 +51,14 @@ func (sym_tab *SymbolTable) addMessageDecl(symbol *Symbol) bool {
 
 	return true
 }
+
+func (sym_tab *SymbolTable) addFile(fileName string) {
+	msgs, err := ParseProtoFile(fileName)
+	if err != nil {
+		log.Fatalf("Error in Parsing the proto file: %v", err)
+	}
+
+	for _, m := range msgs {
+		sym_tab.addMessageDecl(m)
+	}
+}
